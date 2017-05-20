@@ -3,7 +3,7 @@
 import requests
 import os
 import sys
-from git import Repo
+from git import Repo, RemoteProgress
 
 # Relative directory that the repos are to be cloned to
 destination_directory = sys.argv[1]
@@ -24,6 +24,11 @@ if url is None:
     url = 'https://api.github.com/'
 
 
+class Progress(RemoteProgress):
+    def update(self, op_code, cur_count, max_count=None, message=''):
+        print(self._cur_line)
+
+
 query = 'user/repos'
 r = requests.get(url + query, auth=(user, token))
 if r.status_code != 200:
@@ -36,7 +41,7 @@ for repo in repos:
     print('Checking on repo %s' % name)
     if name not in existing_repos:
         print('%s doesnt not exist; cloning now' % name)
-        Repo.clone_from(repo['clone_url'], name)
+        Repo.clone_from(repo['clone_url'], name, progress=Progress())
     else:
         print('%s already exists; updating now' % name)
         # TODO check if repo is not dirty and update
